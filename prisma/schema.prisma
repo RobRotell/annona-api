@@ -1,0 +1,16 @@
+generator client {
+	provider = "prisma-client-js"
+}
+
+datasource db {
+	provider = "mysql"
+	url      = env( "DB_URL" )
+}
+
+model GroceryItems {
+	id				Int      	@id @unique @default( autoincrement() )
+	name 			String 		@db.VarChar( 1000 )
+}
+
+
+// npx prisma db push
