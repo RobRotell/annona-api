@@ -9,7 +9,13 @@ datasource db {
 
 model GroceryItems {
 	id				Int      	@id @unique @default( autoincrement() )
-	name 			String 		@db.VarChar( 1000 )
+	name 			String 		@db.VarChar( 1000 ) @unique
+}
+
+model Settings {
+	id				Int      	@id @unique @default( autoincrement() )
+	name 			String 		@db.VarChar( 1000 ) @unique
+	value 			String 		@db.VarChar( 1000 )
 }
 
 
