@@ -1,31 +1,30 @@
 generator client {
-	provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-	provider = "mysql"
-	url      = env( "DB_URL" )
-}
-
-model GroceryItem {
-	id				Int      	@id @default( autoincrement() )
-	name 			String
-	userId 			Int 		@unique
-	user 			User 		@relation( fields: [ userId ], references: [ id ] )
-}
-
-model Setting {
-	id				Int      	@id @default( autoincrement() )
-	name 			String 		@unique
-	value 			String
+  provider = "mysql"
+  url      = env("DB_URL")
 }
 
 model User {
-	id 				Int 		@id @default( autoincrement() )
-	name 			String 		@unique
-	password 		String
-	GroceryItems 	GroceryItem?
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  password     String
+  GroceryItems GroceryItem[]
 }
 
+model GroceryItem {
+  id     Int    @id @default(autoincrement())
+  name   String
+  user   User   @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model Setting {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  value String
+}
 
 // npx prisma db push
