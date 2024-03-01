@@ -1,6 +1,6 @@
 export const addItem = {
 	method: 'POST',
-	path: '/add',
+	path: '/items/add',
 	options: {
 		auth: 'simple',
 	},

@@ -1,6 +1,6 @@
 export const deleteItem = {
 	method: 'DELETE',
-	path: '/delete',
+	path: '/items/delete',
 	options: {
 		auth: 'simple',
 	},
