@@ -7,14 +7,14 @@ datasource db {
 	url      = env( "DB_URL" )
 }
 
-model GroceryItems {
+model GroceryItem {
 	id				Int      	@id @default( autoincrement() )
 	name 			String
 	userId 			Int 		@unique
 	user 			User 		@relation( fields: [ userId ], references: [ id ] )
 }
 
-model Settings {
+model Setting {
 	id				Int      	@id @default( autoincrement() )
 	name 			String 		@unique
 	value 			String
@@ -24,7 +24,7 @@ model User {
 	id 				Int 		@id @default( autoincrement() )
 	name 			String 		@unique
 	password 		String
-	GroceryItems 	GroceryItems?
+	GroceryItems 	GroceryItem?
 }
 
 
