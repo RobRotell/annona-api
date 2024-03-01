@@ -8,14 +8,23 @@ datasource db {
 }
 
 model GroceryItems {
-	id				Int      	@id @unique @default( autoincrement() )
-	name 			String 		@db.VarChar( 1000 ) @unique
+	id				Int      	@id @default( autoincrement() )
+	name 			String
+	userId 			Int 		@unique
+	user 			User 		@relation( fields: [ userId ], references: [ id ] )
 }
 
 model Settings {
-	id				Int      	@id @unique @default( autoincrement() )
-	name 			String 		@db.VarChar( 1000 ) @unique
-	value 			String 		@db.VarChar( 1000 )
+	id				Int      	@id @default( autoincrement() )
+	name 			String 		@unique
+	value 			String
+}
+
+model User {
+	id 				Int 		@id @default( autoincrement() )
+	name 			String 		@unique
+	password 		String
+	GroceryItems 	GroceryItems?
 }
 
 
