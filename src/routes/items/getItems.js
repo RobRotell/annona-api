@@ -1,15 +1,16 @@
 import { Grocer } from '../../controllers/Grocer.js'
-import { TimeKeeper } from '../../controllers/Timekeeper.js'
 
 
 export const getItems = {
 	method: 'GET',
-	path: '/get',
+	path: '/items/get',
 	options: {
 		auth: 'simple',
 	},
 	async handler( req, h ) {
-		const rawItems = await Grocer.getItems()
+		const { id: userId } = req.auth.credentials
+
+		const rawItems = await Grocer.getItems( userId )
 
 		// Hapi likes a nice, clean array of objects
 		const items = Array.from( rawItems, ( [ key, value ] ) => {
@@ -19,13 +20,10 @@ export const getItems = {
 			}
 		})
 
-		// report when items were last updated
-		const lastModified = await TimeKeeper.getLastModifiedDate()
-
 		return {
+			status: 'success',
 			meta: {
 				count: items.length,
-				lastModified,
 			},
 			items
 		}
