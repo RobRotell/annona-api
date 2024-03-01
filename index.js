@@ -2,11 +2,12 @@ import 'dotenv/config'
 import Hapi from '@hapi/hapi'
 import Basic from '@hapi/basic'
 
-import { SimpleAuth } from './src/controllers/SimpleAuth.js'
+import { Bouncer } from './src/controllers/Bouncer.js'
 
-import { getItems } from './src/routes/getItems.js'
-import { addItem } from './src/routes/addItem.js'
-import { deleteItem } from './src/routes/deleteItem.js'
+import { getItems } from './src/routes/user/getItems.js'
+import { addItem } from './src/routes/items/addItem.js'
+import { deleteItem } from './src/routes/items/deleteItem.js'
+import { createUser } from './src/routes/items/createUser.js'
 
 
 /**
@@ -23,12 +24,13 @@ const init = async () => {
 	// one of these days, we'll beef this up
 	await server.register( Basic )
 	server.auth.strategy( 'simple', 'basic', {
-		validate: SimpleAuth.validate
+		validate: Bouncer.validate
 	})
 
 	server.route( getItems )
 	server.route( addItem )
 	server.route( deleteItem )
+	server.route( createUser )
 
 	await server.start()
 	console.log( 'Server running on %s', server.info.uri )
