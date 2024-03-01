@@ -6,7 +6,7 @@ import { stripSpecialChars } from '../utils/stripSpecialChars.js'
 /**
  * Simple class to maintain users and keep 'em under control 😎
  *
- * @todo Delete user method?
+ * @todo deleteUser method?
  *
  */
 export class Bouncer {
