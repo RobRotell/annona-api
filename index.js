@@ -4,10 +4,10 @@ import Basic from '@hapi/basic'
 
 import { Bouncer } from './src/controllers/Bouncer.js'
 
-import { getItems } from './src/routes/user/getItems.js'
+import { getItems } from './src/routes/items/getItems.js'
 import { addItem } from './src/routes/items/addItem.js'
 import { deleteItem } from './src/routes/items/deleteItem.js'
-import { createUser } from './src/routes/items/createUser.js'
+import { createUser } from './src/routes/user/createUser.js'
 
 
 /**

@@ -1,5 +1,6 @@
 import { Bouncer } from '../../controllers/Bouncer.js'
 
+
 export const createUser = {
 	method: 'POST',
 	path: '/user/create',
@@ -25,8 +26,6 @@ export const createUser = {
 			}
 
 		} catch ( err ) {
-			// console.log( err )
-
 			return h.response({
 				status: 'error',
 				message: err.message,
