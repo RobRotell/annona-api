@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { Database } from '../clients/Database.js'
+import { prisma } from '../clients/Database.js'
 import { stripSpecialChars } from '../utils/stripSpecialChars.js'
 
 
@@ -17,9 +17,7 @@ export class Bouncer {
 	 * @return {string}
 	 */
 	static async getDoorCode() {
-		const dbClient = Database.getClient()
-
-		const setting = await dbClient.setting.findUnique({
+		const setting = await prisma.setting.findUnique({
 			where: {
 				name: 'doorCode'
 			}
@@ -33,12 +31,10 @@ export class Bouncer {
 	 * Get user by username
 	 *
 	 * @param {string} username
-	 * @return {obj|false} User object, if match; otherwise, error
+	 * @return {obj|false} User object, if match; otherwise, false
 	 */
 	static async getUserByName( username ) {
-		const dbClient = Database.getClient()
-
-		const user = await dbClient.user.findUnique({
+		const user = await prisma.user.findUnique({
 			where: {
 				name: username
 			}
@@ -52,12 +48,10 @@ export class Bouncer {
 	 * Get user by ID
 	 *
 	 * @param {int} userId
-	 * @return {obj|false} User object, if match; otherwise, error
+	 * @return {obj|false} User object, if match; otherwise, false
 	 */
 	static async getUserById( id ) {
-		const dbClient = Database.getClient()
-
-		const user = await dbClient.user.findUnique({
+		const user = await prisma.user.findUnique({
 			where: {
 				id
 			}
@@ -69,13 +63,13 @@ export class Bouncer {
 
 	/**
 	 * Create user
+	*
+	 * @todo error if user wasn't created
 	 *
 	 * @throws {Error} username contains invalid characters (must be solely alphanumeric)
 	 * @throws {Error} username is blank or less than three characters ("rob" is three)
 	 * @throws {Error} username matches preexisting user
 	 * @throws {Error} password is blank or less than eight characters
-	 *
-	 * @todo Error if user wasn't created
 	 *
 	 * @param {string} username
 	 * @param {string} password
@@ -108,10 +102,9 @@ export class Bouncer {
 		}
 
 		// time to create user
-		const dbClient = Database.getClient()
 		const hashedPassword = await bcrypt.hash( password, 10 )
 
-		const user = await dbClient.user.create({
+		const user = await prisma.user.create({
 			data: {
 				name: username,
 				password: hashedPassword
@@ -131,34 +124,36 @@ export class Bouncer {
 	 * @param {obj} req
 	 * @param {string} username
 	 * @param {string} password
+	 * @param {obj} h Hapi response toolkit
 	 *
 	 * @return {<Promise>}
 	 */
-	static async validate( req, username, password ) {
+	static async validate( req, username, password, h ) {
 
+		// get user by username
+		const user = await Bouncer.getUserByName( username )
 
-		return new Promise( resolve => {
+		if( user ) {
+			const passwordsMatch = await bcrypt.compare( password, user.password )
 
-			// start with the easy stuff -- simple username check
-			if( username !== process.env.LOCAL_AUTH_USERNAME ) {
-				resolve( false )
-			}
-
-			bcrypt.compare( password, process.env.LOCAL_AUTH_PASSWORD, ( err, result ) => {
-				// todo -- add error logging
-
-				if( !result ) {
-					resolve( false )
-				} else {
-					resolve({
-						isValid: true,
-						credentials: {
-							user: username
-						}
-					})
+			if( passwordsMatch ) {
+				return {
+					isValid: true,
+					credentials: {
+						id: user.id,
+						name: user.name,
+					}
 				}
-			})
-		})
+			}
+		}
+
+		return {
+			isValid: false,
+			response: h.response({
+				status: 'error',
+				message: 'Authentication failed. Do I know you?',
+			}).code( 401 )
+		}
 	}
 
 }
