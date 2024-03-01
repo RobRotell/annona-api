@@ -12,18 +12,19 @@ export class TimeKeeper {
 	 */
 	static async getLastModifiedDate() {
 		const dbClient = Database.getClient()
-
-		let record = await dbClient.settings.findUnique({
+		const query = {
 			where: {
 				name: TimeKeeper.#settingsDbKey
 			}
-		})
+		}
+
+		let record = await dbClient.setting.findUnique( query )
 
 		// if timestamp option doesn't already exist, create it
 		if( !record ) {
 			await TimeKeeper.setLastModifiedDate()
 
-			record = TimeKeeper.getLastModifiedDate()
+			record = await dbClient.setting.findUnique( query )
 		}
 
 		return parseInt( record.value, 10 )
@@ -44,7 +45,7 @@ export class TimeKeeper {
 		const dbClient = Database.getClient()
 
 		// check that option exists
-		const currentValue = await dbClient.settings.findUnique({
+		const currentValue = await dbClient.setting.findUnique({
 			where: {
 				name: TimeKeeper.#settingsDbKey,
 			},
@@ -52,7 +53,7 @@ export class TimeKeeper {
 
 		// if option doesn't exist, create new record
 		if( !currentValue ) {
-			await dbClient.settings.create({
+			await dbClient.setting.create({
 				data: {
 					name: TimeKeeper.#settingsDbKey,
 					value: timestamp.toString(),
@@ -61,7 +62,7 @@ export class TimeKeeper {
 
 		// otherwise, update preexisting record
 		} else {
-			await dbClient.settings.update({
+			await dbClient.setting.update({
 				where: {
 					name: TimeKeeper.#settingsDbKey,
 				},
