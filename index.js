@@ -4,6 +4,7 @@ import Basic from '@hapi/basic'
 
 import { Bouncer } from './src/controllers/Bouncer.js'
 
+import { route404 } from './src/routes/404.js'
 import { getItems } from './src/routes/items/getItems.js'
 import { addItem } from './src/routes/items/addItem.js'
 import { deleteItem } from './src/routes/items/deleteItem.js'
@@ -27,6 +28,7 @@ const init = async () => {
 		validate: Bouncer.validate
 	})
 
+	server.route( route404 )
 	server.route( getItems )
 	server.route( addItem )
 	server.route( deleteItem )
