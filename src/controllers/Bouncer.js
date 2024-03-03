@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { prisma } from '../clients/Database.js'
+import { database } from '../clients/database.js'
 import { stripSpecialChars } from '../utils/stripSpecialChars.js'
 
 
@@ -17,7 +17,7 @@ export class Bouncer {
 	 * @return {string}
 	 */
 	static async getDoorCode() {
-		const setting = await prisma.setting.findUnique({
+		const setting = await database.setting.findUnique({
 			where: {
 				name: 'doorCode'
 			}
@@ -34,7 +34,7 @@ export class Bouncer {
 	 * @return {obj|false} User object, if match; otherwise, false
 	 */
 	static async getUserByName( username ) {
-		const user = await prisma.user.findUnique({
+		const user = await database.user.findUnique({
 			where: {
 				name: username
 			}
@@ -51,7 +51,7 @@ export class Bouncer {
 	 * @return {obj|false} User object, if match; otherwise, false
 	 */
 	static async getUserById( id ) {
-		const user = await prisma.user.findUnique({
+		const user = await database.user.findUnique({
 			where: {
 				id
 			}
@@ -104,7 +104,7 @@ export class Bouncer {
 		// time to create user
 		const hashedPassword = await bcrypt.hash( password, 10 )
 
-		const user = await prisma.user.create({
+		const user = await database.user.create({
 			data: {
 				name: username,
 				password: hashedPassword
