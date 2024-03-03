@@ -1,10 +1,10 @@
 import Joi from 'joi'
-import * as Hoek from '@hapi/hoek'
 import { Grocer } from '../../controllers/Grocer.js'
+import { sanitizeItemName } from '../../utils/sanitizeItemName.js'
 
 
 const validator = Joi.object({
-	name: Joi.string().default( '' ).trim().min( 3 ).max( 140 ).required().messages({
+	name: Joi.string().custom( sanitizeItemName ).trim().min( 3 ).max( 140 ).required().messages({
 		'any.required': 'The name of the grocery item must be provided.',
 		'string.empty': 'The name of this item must be between three and 140 characters long.',
 		'string.min': 'The name of this item must be between three and 140 characters long.',
@@ -34,9 +34,6 @@ export const addItem = {
 	async handler( req, h ) {
 		const { id: userId } = req.auth.credentials
 		let { name: itemName } = req.payload
-
-		// todo -- fix issue with escaping HTML potentially exceeding length
-		itemName = Hoek.escapeHtml( itemName )
 
 		try {
 			const addedItem = await Grocer.addItem( userId, itemName )
