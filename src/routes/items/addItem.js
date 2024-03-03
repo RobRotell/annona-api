@@ -33,7 +33,7 @@ export const addItem = {
 	},
 	async handler( req, h ) {
 		const { id: userId } = req.auth.credentials
-		let { name: itemName } = req.payload
+		const { name: itemName } = req.payload
 
 		try {
 			const addedItem = await Grocer.addItem( userId, itemName )
