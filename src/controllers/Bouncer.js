@@ -98,7 +98,7 @@ export class Bouncer {
 		const preexistingUser = await Bouncer.getUserByName( username )
 
 		if( preexistingUser ) {
-			throw new Error( `User already exists for name: "${username}." Did you already complete this step?` )
+			throw new Error( `User already exists for name: "${username}."` )
 		}
 
 		// time to create user

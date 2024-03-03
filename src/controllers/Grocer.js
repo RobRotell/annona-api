@@ -4,12 +4,35 @@ import { prisma } from '../clients/Database.js'
 
 export class Grocer {
 
+
+	/**
+	 * Get specific item
+	 *
+	 * Not responsible for ensuring user exists.
+	 *
+	 * @param {number} userId
+	 * @param {number} itemId
+	 * @return {obj|null} object, if exists; otherwise, null
+	 */
+	static async getItem( userId, itemId ) {
+		const record = await prisma.groceryItem.findFirst({
+			where: {
+				id: itemId,
+				userId
+			}
+		})
+
+		// Prisma will return null if no record matches
+		return record
+	}
+
+
 	/**
 	 * Get all grocery items
 	 *
 	 * Not responsible for ensuring user exists.
 	 *
-	 * @param {int} userId
+	 * @param {number} userId
 	 * @return {Map}
 	 */
 	static async getItems( userId ) {
@@ -33,12 +56,14 @@ export class Grocer {
 	/**
 	 * Create new grocery item
 	 *
+	 * Item should ALREADY be sanitized.
+	 *
 	 * @todo add logging when item couldn't be added (e.g. issue with Prisma)
 	 *
 	 * @throws {Error} invalid user
 	 * @throws {Error} item name is not between three and 140 characters
 	 *
-	 * @param {int} userId
+	 * @param {number} userId
 	 * @param {string} itemName
 	 *
 	 * @return {object} Item ID and name
@@ -96,16 +121,50 @@ export class Grocer {
 	 * Delete grocery item
 	 *
 	 * @todo Support for passing item name?
+	 * @todo support for passing multiple item IDs?
 	 *
-	 * @param {number} id
+	 * @throws {Error} user ID does not match user
+	 * @throws {Error} item ID is not a number
+	 *
+	 * @param {number} userId
+	 * @param {number} itemId
+	 *
 	 * @return {bool} True, if record was deleted. False, if record didn't exist
 	 */
-	static async deleteItem( id ) {
-		// check if record exists
-		// if so, return false
-		// otherwise, delete record
-		// set last modified date
-		// return true
+	static async deleteItem( userId, itemId ) {
+		const user = await Bouncer.getUserById( userId )
+
+		if( !user ) {
+			throw new Error( 'Item cannot be deleted for user as user does not exist.' )
+		}
+
+		// ensure itemId is an integer
+		if( 'number' !== typeof itemId || !Number.isInteger( itemId ) ) {
+			throw new Error( 'Item ID must be an integer.' )
+		}
+
+		// does record even exist?
+		const item = await Grocer.getItem( userId, itemId )
+
+		// if it doesn't, then just return true
+		if( !item ) {
+			return true
+		}
+
+		// otherwise, try to delete item
+		try {
+			const deleted = await prisma.groceryItem.delete({
+				where: {
+					id: itemId,
+					userId,
+				}
+			})
+
+			return true
+
+		} catch ( err ) {
+			throw new Error( `Failed to delete item with ID: "${itemId}"` )
+		}
 	}
 
 }
