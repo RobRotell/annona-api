@@ -1,5 +1,5 @@
 import { Bouncer } from './Bouncer.js'
-import { prisma } from '../clients/Database.js'
+import { database } from '../clients/database.js'
 
 
 export class Grocer {
@@ -12,10 +12,11 @@ export class Grocer {
 	 *
 	 * @param {number} userId
 	 * @param {number} itemId
+	 *
 	 * @return {obj|null} object, if exists; otherwise, null
 	 */
 	static async getItem( userId, itemId ) {
-		const record = await prisma.groceryItem.findFirst({
+		const record = await database.groceryItem.findFirst({
 			where: {
 				id: itemId,
 				userId
@@ -32,13 +33,23 @@ export class Grocer {
 	 *
 	 * Not responsible for ensuring user exists.
 	 *
+	 * @throws {Error} invalid user
+	 *
 	 * @param {number} userId
 	 * @return {Map}
 	 */
 	static async getItems( userId ) {
+
+		// confirm user exists
+		const user = await Bouncer.getUserById( userId )
+
+		if( !user ) {
+			throw new Error( 'Cannot get items for user as user does not exist.' )
+		}
+
 		const items = new Map
 
-		const records = await prisma.groceryItem.findMany({
+		const records = await database.groceryItem.findMany({
 			where: {
 				userId
 			}
@@ -56,7 +67,7 @@ export class Grocer {
 	/**
 	 * Create new grocery item
 	 *
-	 * Item should ALREADY be sanitized.
+	 * Item name should ALREADY be sanitized.
 	 *
 	 * @todo add logging when item couldn't be added (e.g. issue with Prisma)
 	 *
@@ -83,7 +94,7 @@ export class Grocer {
 		}
 
 		// check if item was already added
-		const preexistingItem = await prisma.groceryItem.findMany({
+		const preexistingItem = await database.groceryItem.findMany({
 			where: {
 				name: itemName,
 				userId
@@ -99,7 +110,7 @@ export class Grocer {
 		}
 
 		// todo -- add logging in case record wasn't added
-		const newItem = await prisma.groceryItem.create({
+		const newItem = await database.groceryItem.create({
 			data: {
 				name: itemName,
 				user: {
@@ -123,13 +134,13 @@ export class Grocer {
 	 * @todo Support for passing item name?
 	 * @todo support for passing multiple item IDs?
 	 *
-	 * @throws {Error} user ID does not match user
+	 * @throws {Error} invalid user
 	 * @throws {Error} item ID is not a number
 	 *
 	 * @param {number} userId
 	 * @param {number} itemId
 	 *
-	 * @return {bool} True, if record was deleted. False, if record didn't exist
+	 * @return {bool} Always true
 	 */
 	static async deleteItem( userId, itemId ) {
 		const user = await Bouncer.getUserById( userId )
@@ -153,7 +164,7 @@ export class Grocer {
 
 		// otherwise, try to delete item
 		try {
-			const deleted = await prisma.groceryItem.delete({
+			await database.groceryItem.delete({
 				where: {
 					id: itemId,
 					userId,
@@ -164,6 +175,69 @@ export class Grocer {
 
 		} catch ( err ) {
 			throw new Error( `Failed to delete item with ID: "${itemId}"` )
+		}
+	}
+
+
+	/**
+	 * Update specific item with new name
+	 *
+	 * Item name should ALREADY be sanitized.
+	 *
+	 * @todo logging for failed update queries
+	 *
+	 * @throws {Error} invalid user
+	 * @throws {Error} preexisting grocery item does not exist
+	 *
+	 * @param {number} userId
+	 * @param {number} itemId
+	 * @param {string} itemNewName
+	 *
+	 * @return {obj} Item ID and name
+	 */
+	static async updateItem( userId, itemId, itemNewName ) {
+
+		// confirm user exists
+		const user = await Bouncer.getUserById( userId )
+
+		if( !user ) {
+			throw new Error( 'Item cannot be updated for user as user does not exist.' )
+		}
+
+		// confirm that item exists
+		const item = await Grocer.getItem( userId, itemId )
+
+		if( !item ) {
+			throw new Error( 'Item cannot be updated as item does not exist.' )
+		}
+
+		// if item name already matches item, then just return that without making update
+		if( itemNewName === item.name ) {
+			return {
+				id: item.id,
+				name: item.name
+			}
+		}
+
+		// todo -- logging for failed queries
+		try {
+			const updatedItem = await database.groceryItem.update({
+				where: {
+					id: itemId,
+					userId,
+				},
+				data: {
+					name: itemNewName,
+				}
+			})
+
+			return {
+				id: updatedItem.id,
+				name: updatedItem.name,
+			}
+
+		} catch ( err ) {
+			throw new Error( `Failed to rename item with ID: "${itemId}" with name: "${itemNewName}"` )
 		}
 	}
 

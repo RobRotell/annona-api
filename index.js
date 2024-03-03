@@ -9,6 +9,7 @@ import { getItems } from './src/routes/items/getItems.js'
 import { addItem } from './src/routes/items/addItem.js'
 import { deleteItem } from './src/routes/items/deleteItem.js'
 import { createUser } from './src/routes/user/createUser.js'
+import { updateItem } from './src/routes/items/updateItem.js'
 
 
 /**
@@ -32,6 +33,7 @@ const init = async () => {
 	server.route( getItems )
 	server.route( addItem )
 	server.route( deleteItem )
+	server.route( updateItem )
 	server.route( createUser )
 
 	await server.start()
