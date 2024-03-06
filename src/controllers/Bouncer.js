@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { database } from '../clients/Database.js'
+import { database } from '../clients/database.js'
 import { stripSpecialChars } from '../utils/stripSpecialChars.js'
 
 

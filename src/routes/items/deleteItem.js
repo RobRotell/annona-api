@@ -33,11 +33,18 @@ export const deleteItem = {
 		const { id: itemId } = req.payload
 
 		try {
-			await Grocer.deleteItem( userId, itemId )
+			const deletedItem = await Grocer.deleteItem( userId, itemId )
 
-			return {
-				status: 'success',
-				message: 'Item has been deleted.',
+			if( deletedItem ) {
+				return {
+					status: 'success',
+					message: 'Item has been deleted.',
+				}
+			} else {
+				return {
+					status: 'error',
+					message: 'Failed to delete item. Please try again.',
+				}
 			}
 
 		} catch ( err ) {

@@ -12,8 +12,7 @@ export class Grocer {
 	 *
 	 * @param {number} userId
 	 * @param {number} itemId
-	 *
-	 * @return {obj|null} object, if exists; otherwise, null
+	 * @return {Promise<object|null>} object, if exists; otherwise, null
 	 */
 	static async getItem( userId, itemId ) {
 		const record = await database.groceryItem.findFirst({
@@ -33,20 +32,10 @@ export class Grocer {
 	 *
 	 * Not responsible for ensuring user exists.
 	 *
-	 * @throws {Error} invalid user
-	 *
 	 * @param {number} userId
-	 * @return {Map}
+	 * @return {Promise<Map>}
 	 */
 	static async getItems( userId ) {
-
-		// confirm user exists
-		const user = await Bouncer.getUserById( userId )
-
-		if( !user ) {
-			throw new Error( 'Cannot get items for user as user does not exist.' )
-		}
-
 		const items = new Map
 
 		const records = await database.groceryItem.findMany({
@@ -67,7 +56,7 @@ export class Grocer {
 	/**
 	 * Create new grocery item
 	 *
-	 * Item name should ALREADY be sanitized.
+	 * Item should ALREADY be sanitized.
 	 *
 	 * @todo add logging when item couldn't be added (e.g. issue with Prisma)
 	 *
@@ -77,7 +66,7 @@ export class Grocer {
 	 * @param {number} userId
 	 * @param {string} itemName
 	 *
-	 * @return {object} Item ID and name
+	 * @return {Promise<object>} Item ID and name
 	 */
 	static async addItem( userId, itemName ) {
 
@@ -134,13 +123,13 @@ export class Grocer {
 	 * @todo Support for passing item name?
 	 * @todo support for passing multiple item IDs?
 	 *
-	 * @throws {Error} invalid user
+	 * @throws {Error} user ID does not match user
 	 * @throws {Error} item ID is not a number
 	 *
 	 * @param {number} userId
 	 * @param {number} itemId
 	 *
-	 * @return {bool} Always true
+	 * @return {Promise<boolean>} True, if record was deleted. False, if record didn't exist
 	 */
 	static async deleteItem( userId, itemId ) {
 		const user = await Bouncer.getUserById( userId )
@@ -175,69 +164,6 @@ export class Grocer {
 
 		} catch ( err ) {
 			throw new Error( `Failed to delete item with ID: "${itemId}"` )
-		}
-	}
-
-
-	/**
-	 * Update specific item with new name
-	 *
-	 * Item name should ALREADY be sanitized.
-	 *
-	 * @todo logging for failed update queries
-	 *
-	 * @throws {Error} invalid user
-	 * @throws {Error} preexisting grocery item does not exist
-	 *
-	 * @param {number} userId
-	 * @param {number} itemId
-	 * @param {string} itemNewName
-	 *
-	 * @return {obj} Item ID and name
-	 */
-	static async updateItem( userId, itemId, itemNewName ) {
-
-		// confirm user exists
-		const user = await Bouncer.getUserById( userId )
-
-		if( !user ) {
-			throw new Error( 'Item cannot be updated for user as user does not exist.' )
-		}
-
-		// confirm that item exists
-		const item = await Grocer.getItem( userId, itemId )
-
-		if( !item ) {
-			throw new Error( 'Item cannot be updated as item does not exist.' )
-		}
-
-		// if item name already matches item, then just return that without making update
-		if( itemNewName === item.name ) {
-			return {
-				id: item.id,
-				name: item.name
-			}
-		}
-
-		// todo -- logging for failed queries
-		try {
-			const updatedItem = await database.groceryItem.update({
-				where: {
-					id: itemId,
-					userId,
-				},
-				data: {
-					name: itemNewName,
-				}
-			})
-
-			return {
-				id: updatedItem.id,
-				name: updatedItem.name,
-			}
-
-		} catch ( err ) {
-			throw new Error( `Failed to rename item with ID: "${itemId}" with name: "${itemNewName}"` )
 		}
 	}
 

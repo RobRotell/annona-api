@@ -1,14 +1,11 @@
 import Joi from 'joi'
+import * as Hoek from '@hapi/hoek'
 import { Grocer } from '../../controllers/Grocer.js'
-import { sanitizeItemName } from '../../utils/sanitizeItemName.js'
 
 
 const validator = Joi.object({
-	id: Joi.number().integer().required().messages({
-		'any.required': 'The ID of the grocery item must be provided.',
-		'number.base': 'The ID of the grocery item must be a number.',
-	}),
-	name: Joi.string().custom( sanitizeItemName ).trim().min( 3 ).max( 140 ).required().messages({
+	id: Joi.number().default( 0 ).required(),
+	name: Joi.string().default( '' ).trim().min( 3 ).max( 140 ).required().messages({
 		'any.required': 'The name of the grocery item must be provided.',
 		'string.empty': 'The name of this item must be between three and 140 characters long.',
 		'string.min': 'The name of this item must be between three and 140 characters long.',
@@ -18,7 +15,7 @@ const validator = Joi.object({
 
 
 export const updateItem = {
-	method: 'PATCH',
+	method: 'UPDATE',
 	path: '/items/update',
 	options: {
 		auth: 'simple',
@@ -37,29 +34,17 @@ export const updateItem = {
 	},
 	async handler( req, h ) {
 		const { id: userId } = req.auth.credentials
-		const { id: itemId, name: itemName } = req.payload
+		const { id: itemId } = req.payload
 
-		try {
-			const updatedItem = await Grocer.updateItem( userId, itemId, itemName, )
+		let { name: itemName } = req.payload
 
-			return {
-				status: 'success',
-				meta: {
-					count: 1 // todo -- support for updating multiple items at once
-				},
-				items: [
-					{
-						id: updatedItem.id,
-						name: updatedItem.name,
-					},
-				],
-			}
+		// todo -- fix issue with escaping HTML potentially exceeding length
+		itemName = Hoek.escapeHtml( itemName )
 
-		} catch ( err ) {
-			return h.response({
-				status: 'error',
-				message: err.message
-			}).code( 400 )
-		}
+		console.log({
+			userId,
+			itemId,
+			itemName
+		})
 	}
 }

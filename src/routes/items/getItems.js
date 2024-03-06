@@ -10,30 +10,22 @@ export const getItems = {
 	async handler( req, h ) {
 		const { id: userId } = req.auth.credentials
 
-		try {
-			const rawItems = await Grocer.getItems( userId )
+		const rawItems = await Grocer.getItems( userId )
 
-			// Hapi likes a nice, clean array of objects
-			const items = Array.from( rawItems, ( [ key, value ] ) => {
-				return {
-					id: key,
-					name: value,
-				}
-			})
-
+		// Hapi likes a nice, clean array of objects
+		const items = Array.from( rawItems, ( [ key, value ] ) => {
 			return {
-				status: 'success',
-				meta: {
-					count: items.length,
-				},
-				items
+				id: key,
+				name: value,
 			}
+		})
 
-		} catch ( err ) {
-			return h.response({
-				status: 'error',
-				message: err.message
-			}).code( 400 )
+		return {
+			status: 'success',
+			meta: {
+				count: items.length,
+			},
+			items
 		}
 	}
 }
