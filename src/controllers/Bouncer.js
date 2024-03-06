@@ -1,5 +1,5 @@
 import bcrypt from 'bcrypt'
-import { database } from '../clients/database.js'
+import { database } from '../clients/Database.js'
 import { stripSpecialChars } from '../utils/stripSpecialChars.js'
 
 
@@ -14,7 +14,7 @@ export class Bouncer {
 	/**
 	 * Get super secret door code
 	 *
-	 * @return {string}
+	 * @return {Promise<string>}
 	 */
 	static async getDoorCode() {
 		const setting = await database.setting.findUnique({
@@ -30,8 +30,10 @@ export class Bouncer {
 	/**
 	 * Get user by username
 	 *
+	 * Username should ALREADY be sanitized.
+	 *
 	 * @param {string} username
-	 * @return {obj|false} User object, if match; otherwise, false
+	 * @return {Promise<object|false>} User object, if match; otherwise, false
 	 */
 	static async getUserByName( username ) {
 		const user = await database.user.findUnique({
@@ -47,8 +49,8 @@ export class Bouncer {
 	/**
 	 * Get user by ID
 	 *
-	 * @param {int} userId
-	 * @return {obj|false} User object, if match; otherwise, false
+	 * @param {number} userId
+	 * @return {Promise<object|false>} User object, if match; otherwise, false
 	 */
 	static async getUserById( id ) {
 		const user = await database.user.findUnique({
@@ -74,7 +76,7 @@ export class Bouncer {
 	 * @param {string} username
 	 * @param {string} password
 	 *
-	 * @return {string} Username
+	 * @return {Promise<string>} Username
 	 */
 	static async createUser( username, password ) {
 
@@ -117,18 +119,14 @@ export class Bouncer {
 
 
 	/**
-	 * Super simple auth code validation
+	 * Verify that a user exists and password matches
 	 *
-	 * @todo Add error logging
-	 *
-	 * @param {obj} req
 	 * @param {string} username
 	 * @param {string} password
-	 * @param {obj} h Hapi response toolkit
 	 *
-	 * @return {<Promise>}
+	 * @return {Promise<object|false>} User object, if user matches; otherwise, false
 	 */
-	static async validate( req, username, password, h ) {
+	static async verify( username, password ) {
 
 		// get user by username
 		const user = await Bouncer.getUserByName( username )
@@ -137,23 +135,11 @@ export class Bouncer {
 			const passwordsMatch = await bcrypt.compare( password, user.password )
 
 			if( passwordsMatch ) {
-				return {
-					isValid: true,
-					credentials: {
-						id: user.id,
-						name: user.name,
-					}
-				}
+				return user
 			}
 		}
 
-		return {
-			isValid: false,
-			response: h.response({
-				status: 'error',
-				message: 'Authentication failed. Do I know you?',
-			}).code( 401 )
-		}
+		return false
 	}
 
 }
