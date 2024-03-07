@@ -1,6 +1,5 @@
 import Joi from 'joi'
 import * as Hoek from '@hapi/hoek'
-import { Grocer } from '../../controllers/Grocer.js'
 
 
 const validator = Joi.object({
@@ -15,7 +14,7 @@ const validator = Joi.object({
 
 
 export const updateItem = {
-	method: 'UPDATE',
+	method: 'PATCH',
 	path: '/items/update',
 	options: {
 		auth: 'simple',
