@@ -1,10 +1,11 @@
 import Joi from 'joi'
-import * as Hoek from '@hapi/hoek'
+import { sanitizeItemName } from '../../utils/sanitizeItemName.js'
+import { Grocer } from '../../controllers/Grocer.js'
 
 
 const validator = Joi.object({
-	id: Joi.number().default( 0 ).required(),
-	name: Joi.string().default( '' ).trim().min( 3 ).max( 140 ).required().messages({
+	id: Joi.number().integer().required(),
+	name: Joi.string().custom( sanitizeItemName ).trim().min( 3 ).max( 140 ).required().messages({
 		'any.required': 'The name of the grocery item must be provided.',
 		'string.empty': 'The name of this item must be between three and 140 characters long.',
 		'string.min': 'The name of this item must be between three and 140 characters long.',
@@ -33,17 +34,24 @@ export const updateItem = {
 	},
 	async handler( req, h ) {
 		const { id: userId } = req.auth.credentials
-		const { id: itemId } = req.payload
+		const { id: itemId, name: itemName } = req.payload
 
-		let { name: itemName } = req.payload
+		try {
+			const updatedItem = await Grocer.updateItem( userId, itemId, itemName )
 
-		// todo -- fix issue with escaping HTML potentially exceeding length
-		itemName = Hoek.escapeHtml( itemName )
+			return {
+				status: 'success',
+				meta: {
+					count: 1, // todo -- support for updating multiple items at once
+				},
+				items: [ updatedItem ],
+			}
 
-		console.log({
-			userId,
-			itemId,
-			itemName
-		})
+		} catch ( err ) {
+			return h.response({
+				status: 'error',
+				message: err.message,
+			}).code( 400 )
+		}
 	}
 }

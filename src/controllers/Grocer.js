@@ -56,9 +56,9 @@ export class Grocer {
 	/**
 	 * Create new grocery item
 	 *
-	 * Item should ALREADY be sanitized.
+	 * Item name should ALREADY be sanitized
 	 *
-	 * @todo add logging when item couldn't be added (e.g. issue with Prisma)
+	 * @todo add logging when item couldn't be added
 	 *
 	 * @throws {Error} invalid user
 	 * @throws {Error} item name is not between three and 140 characters
@@ -113,6 +113,78 @@ export class Grocer {
 		return {
 			id: newItem.id,
 			name: newItem.name,
+		}
+	}
+
+
+	/**
+	 * Update grocery item name
+	 *
+	 * Item name should ALREADY be sanitized
+	 *
+	 * @todo add logging when item couldn't be updated
+	 *
+	 * @throws {Error} invalid user
+	 * @throws {Error} item name is not between three and 140 characters
+	 * @throws {Error} no matching item exists
+	 *
+	 * @param {number} userId
+	 * @param {number} itemId
+	 * @param {string} newItemName
+	 *
+	 * @return {Promise<object>} Item ID and name
+	 */
+	static async updateItem( userId, itemId, newItemName ) {
+
+		// confirm user exists
+		const user = await Bouncer.getUserById( userId )
+
+		if( !user ) {
+			throw new Error( 'Item cannot be added for user as user does not exist.' )
+		}
+
+		// is item name valid?
+		if( 'string' !== typeof newItemName || 3 > newItemName.length || 140 < newItemName.length ) {
+			throw new Error( 'Item must be between three and 140 characters long.' )
+		}
+
+		// find preexisting item
+		let preexistingItem = await database.groceryItem.findMany({
+			where: {
+				id: itemId,
+				userId
+			}
+		})
+
+		// if no preexisting item, stop now
+		if( !preexistingItem.length ) {
+			throw new Error( 'Failed to find original item.' )
+		}
+
+		// Prisma returns array; use first
+		preexistingItem = preexistingItem[0]
+
+		// if name already matches what we're updating it to, just use that
+		if( newItemName === preexistingItem.name ) {
+			return {
+				id: preexistingItem.id,
+				name: preexistingItem.name,
+			}
+		}
+
+		const updatedItem = await database.groceryItem.update({
+			where: {
+				id: preexistingItem.id,
+			},
+			data: {
+				name: newItemName
+			}
+		})
+
+		// todo -- add logging in case record wasn't updated
+		return {
+			id: updatedItem.id,
+			name: updatedItem.name
 		}
 	}
 
