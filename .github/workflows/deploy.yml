@@ -1,0 +1,83 @@
+name: Deploy to droplet
+
+on:
+    push:
+        branches:
+            - main
+
+jobs:
+    deploys:
+        runs-on: ubuntu-latest
+
+        steps:
+            - name: Checkout repo
+              uses: actions/checkout@v2
+
+            - name: Setup node
+              uses: actions/setup-node@v2
+              with:
+                node-version: '18'
+
+            - name: Install npm dependencies
+              run: npm install
+
+            - name: Stop app through pm2
+              uses: appleboy/ssh-action@master
+              with:
+                host: |
+                  ${{ secrets.REMOTE_HOST }}
+                username: ${{ secrets.REMOTE_USER }}
+                port: ${{ secrets.REMOTE_PORT }}
+                key: |
+                  ${{ secrets.SSH_PRIVATE_KEY }}
+
+                # we need to explicitly execute nvm to run pm2 since .bashrc has an early return for non-interactive shells
+                script: |
+                  # load nvm (to load npm and node)
+                  export NVM_DIR="$HOME/.nvm"
+                  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+                  # stop app to avoid errors in meantime
+                  pm2 stop api-annona
+
+            # todo -- delete old/unused files (rm option deletes everything, including .env files)
+            - name: Upload new app files
+              uses: appleboy/scp-action@master
+              with:
+                host: |
+                  ${{ secrets.REMOTE_HOST }}
+                username: ${{ secrets.REMOTE_USER }}
+                port: ${{ secrets.REMOTE_PORT }}
+                key: |
+                  ${{ secrets.SSH_PRIVATE_KEY }}
+                source: "src,index.js,package.json,package-lock.json"
+                target: ${{ secrets.REMOTE_DIR_PATH }}
+                debug: true
+
+            - name: Reinstall node modules and restart app through pm2
+              uses: appleboy/ssh-action@master
+              env:
+                APP_PATH: ${{ secrets.REMOTE_DIR_PATH }}
+              with:
+                host: |
+                  ${{ secrets.REMOTE_HOST }}
+                username: ${{ secrets.REMOTE_USER }}
+                port: ${{ secrets.REMOTE_PORT }}
+                envs: APP_PATH
+                key: |
+                  ${{ secrets.SSH_PRIVATE_KEY }}
+
+                # we need to explicitly execute nvm to run pm2 since .bashrc has an early return for non-interactive shells
+                script: |
+                  # load nvm (to load npm and node)
+                  export NVM_DIR="$HOME/.nvm"
+                  [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+                  [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+
+                  # install any new node modules
+                  cd $APP_PATH
+                  npm i # installs any new modules
+
+                  # restart app
+                  pm2 restart api-annona
