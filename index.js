@@ -22,6 +22,10 @@ const init = async () => {
 	const server = Hapi.server({
 		host: '127.0.0.1',
 		port: process.env.PORT,
+		routes: {
+			cors: true,
+
+		}
 	})
 
 	// one of these days, we'll beef this up
